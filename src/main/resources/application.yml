@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: monitoring-demo
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: '*'
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+server:
+  port: 8080
+app:
+  job:
+    scheduler-job:
+      fixed-delay:
+        millis: 5000
+      name: scheduler-job

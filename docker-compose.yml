@@ -1,0 +1,56 @@
+version: '2.1'
+
+networks:
+  monitoring:
+    driver: bridge
+services:
+
+  grafana-prometheus:
+    image: grafana-prometheus:0.0.1-SNAPSHOT
+    container_name: grafana-prometheus
+    restart: always
+    ports:
+      - "8080:8080"
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    networks:
+      - monitoring
+  prometheus:
+    image: prom/prometheus:v2.38.0
+    container_name: prometheus-container
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+      - '--storage.tsdb.path=/etc/prometheus/storage/'
+    ports:
+      - "9090:9090"
+    restart: always
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana-oss:9.1.4
+    user: "0:0"
+    container_name: grafana-container
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/:/var/lib/grafana
+    networks:
+      - monitoring
